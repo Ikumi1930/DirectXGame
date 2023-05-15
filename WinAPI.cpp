@@ -1,6 +1,5 @@
 #include "WinAPI.h"
 
-
 LRESULT CALLBACK WinAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	//メッセージに応じてゲーム固有の処理を行う
 	switch (msg)
@@ -15,11 +14,11 @@ LRESULT CALLBACK WinAPI::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 }
 
 
-WinAPI::WinAPI(const wchar_t* name) {
+void WinAPI::Initialize() {
 
 	wc.lpfnWndProc = WindowProc;
 
-	wc.lpszClassName = name;
+	wc.lpszClassName = L"CG2WindowClass";
 
 	wc.hInstance = GetModuleHandle(nullptr);
 
@@ -31,11 +30,9 @@ WinAPI::WinAPI(const wchar_t* name) {
 
 	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
 
-
-
 	HWND hwnd = CreateWindow(
 		wc.lpszClassName,
-		name,
+		L"CG2",
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,

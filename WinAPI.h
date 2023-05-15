@@ -5,10 +5,7 @@
 class WinAPI
 {
 public:
-
-	WinAPI(const wchar_t* name);
-	~WinAPI();
-
+	void Initialize();
 	static LRESULT WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
 	const int32_t kClientWidth = 1280;
