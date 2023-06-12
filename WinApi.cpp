@@ -17,15 +17,15 @@ LRESULT CALLBACK WinApi::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
 void WinApi::CreateWindowView(const wchar_t* title) {
 	//ウィンドウプロシージャ
-	wc.lpfnWndProc = WindowProc;
+	wc_.lpfnWndProc = WindowProc;
 	//クラス名
-	wc.lpszClassName = L"CG2WindowClass";
+	wc_.lpszClassName = L"CG2WindowClass";
 	//インスタンスハンドルH
-	wc.hInstance = GetModuleHandle(nullptr);
+	wc_.hInstance = GetModuleHandle(nullptr);
 	//カーソル
-	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	wc_.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	//ウィンドウクラス登録
-	RegisterClass(&wc);
+	RegisterClass(&wc_);
 	//ウィンドウサイズの構造体にクライアント領域を入れる
 	RECT wrc = { 0,0,kClientWidth,kClientHeight };
 	//クライアント領域を元に実際のサイズにwrcを変更してもらう
@@ -33,7 +33,7 @@ void WinApi::CreateWindowView(const wchar_t* title) {
 
 	//ウィンドウ生成
 	hwnd_ = CreateWindow(
-		wc.lpszClassName,//クラス名
+		wc_.lpszClassName,//クラス名
 		title,//タイトルバーの名前
 		WS_OVERLAPPEDWINDOW,//ウィンドウスタイル
 		CW_USEDEFAULT,//表示X座標
@@ -42,14 +42,47 @@ void WinApi::CreateWindowView(const wchar_t* title) {
 		wrc.bottom - wrc.top,//ウィンドウ縦幅
 		nullptr,//親ウィンドウハンドル
 		nullptr,//メニューハンドル
-		wc.hInstance,//インスタンスハンドル
+		wc_.hInstance,//インスタンスハンドル
 		nullptr//オプション
 	);
 
+#ifdef _DEBUG//デバッグレイヤー
+	debugController_ = nullptr;
+	if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController_)))) {
+		//デバッグレイヤーを有効化
+		debugController_->EnableDebugLayer();
+		//GPU側でもチェックを行う
+		debugController_->SetEnableGPUBasedValidation(TRUE);
+	}
+#endif // _DEBUG
+
 	//ウィンドウ表示
 	ShowWindow(hwnd_, SW_SHOW);
-
-
-
    }
+
+bool WinApi::Procesmessage() {
+	MSG msg{};
+
+	if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+	if (msg.message == WM_QUIT) // 終了メッセージが来たらループを抜ける
+	{
+		return true;
+	}
+
+	return false;
+}
+
+void WinApi::Finalize()
+{
+	debugController_->Release();
+}
+
+
 HWND WinApi::hwnd_;
+UINT WinApi::windowStyle_;
+ID3D12Debug1* WinApi::debugController_;
