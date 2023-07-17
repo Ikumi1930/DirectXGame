@@ -15,7 +15,7 @@ LRESULT CALLBACK WinApi::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-void WinApi::CreateWindowView(const wchar_t* title) {
+void WinApi::CreateWindowView(const wchar_t* title, int32_t clientWidth, int32_t clientheight) {
 	//ウィンドウプロシージャ
 	wc_.lpfnWndProc = WindowProc;
 	//クラス名

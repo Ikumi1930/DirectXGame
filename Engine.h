@@ -21,12 +21,12 @@ public:
 
 	void Update();
 
-	void DrawTriangle(const Vector4& a, const Vector4& b, const Vector4& c);
+	void DrawTriangle(const Vector4& a, const Vector4& b, const Vector4& c, const Vector4& material);
 
 	static WinApi* win_;
 	static	DirectXCommon* dxCommon_;
 
-	Triangle* triangle_[11];
+	CreateTriangle* triangle_[11];
 
 	int triangleCount_;
 
@@ -51,7 +51,6 @@ public:
 
 	ID3D12PipelineState* graphicsPipelineState_;
 
-	ID3D12Resource* vertexResource_;
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView_;
 
 	D3D12_VIEWPORT viewport_{};
@@ -59,12 +58,11 @@ public:
 
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs_[1];
 
+
+
 	//頂点リソースにデータを書き込む
 	Vector4* vertexData_;
-	Vector4 leftBottom[11];
-	Vector4 top[11];
-	Vector4 rightBottom[11];
-
+	
 	IDxcBlob* CompileShader(
 		//CompileShaderするShaderファイルへのパス
 		const std::wstring& filePath,
@@ -81,7 +79,6 @@ public:
 	void BlendState();
 	void RasterizerState();
 	void InitializePSO();
-	void VertexResource();
 	void ViewPort();
 	void ScissorRect();
 

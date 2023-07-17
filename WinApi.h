@@ -24,7 +24,7 @@ public:
 
 	static HWND GetHwnd() { return hwnd_;}
 
-	static void CreateWindowView(const wchar_t* title = L"CG2_WinMain");
+	static void CreateWindowView(const wchar_t* title, int32_t clientWidth, int32_t clientheight);
 
 private:
 	static	UINT windowStyle_;

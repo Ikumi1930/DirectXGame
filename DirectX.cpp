@@ -54,7 +54,7 @@ void  DirectXCommon::Initialization(WinApi* win, const wchar_t* title, int32_t b
 	backBufferWidth_ = backBufferWidth;
 	backBufferHeight_ = backBufferHeight;
 
-	winApi_->CreateWindowView(title);
+	winApi_->CreateWindowView(title,1280,720);
 
 	// DXGIデバイス初期化
 	InitializeDXGIDevice();
