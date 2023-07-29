@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "DirectX.h"
 #include <dxcapi.h>
 #include"Vector4.h"

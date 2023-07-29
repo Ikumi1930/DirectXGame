@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <chrono>
 #include <cstdlib>
 #include <dxgi1_6.h>
