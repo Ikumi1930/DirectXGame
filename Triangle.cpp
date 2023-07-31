@@ -1,6 +1,10 @@
 #include "Triangle.h"
 #include <assert.h>
 #include "Engine.h"
+#include "externals/imgui/imgui.h"
+#include "externals/imgui/imgui_impl_dx12.h"
+#include "externals/imgui/imgui_impl_win32.h"
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 void CreateTriangle::Initialize(DirectXCommon* dxCommon, const Vector4& a, const Vector4& b, const Vector4& c, const Vector4& material) {
 	dxCommon_ = dxCommon;
@@ -18,7 +22,6 @@ void CreateTriangle::Draw() {
 	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource_->GetGPUVirtualAddress());
 	//描画
 	dxCommon_->GetCommandList()->DrawInstanced(3, 1, 0, 0);
-
 }
 
 void CreateTriangle::Finalize() {
@@ -63,6 +66,11 @@ void CreateTriangle::SettingColor(const Vector4& material) {
 	materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
 
 	*materialData_ = material;
+
+	inputFloat[0] = &materialData_->x;
+	inputFloat[1] = &materialData_->y;
+	inputFloat[2] = &materialData_->z;
+	inputFloat[3] = &materialData_->w;
 }
 
 ID3D12Resource* CreateTriangle::CreateBufferResource(ID3D12Device* device, size_t sizeInBytes) {

@@ -27,9 +27,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			//ゲームの処理
 			Engine->BeginFrame();
+
+			ImGui_ImplDX12_NewFrame();
+			ImGui_ImplWin32_NewFrame();
+			ImGui::NewFrame();
+
+			ImGui::ShowDemoWindow();
 			Engine->Update();
 
 			Engine->Draw();
+
+			ImGui::Render();
 
 			Engine->EndFrame();
 

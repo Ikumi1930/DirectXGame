@@ -1,6 +1,10 @@
 #include "Engine.h"
 #include "Triangle.h"
 #include <assert.h>
+#include "externals/imgui/imgui.h"
+#include "externals/imgui/imgui_impl_dx12.h"
+#include "externals/imgui/imgui_impl_win32.h"
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 /***************************************************************************************
 DXC(DirectX Shader Compiler)はHLSLからDXIL(DirectX Intermediate Language)にするコンパイラー
@@ -262,6 +266,8 @@ void CreateEngine::Initialize()
 
 void CreateEngine::Initialization(WinApp* win, const wchar_t* title, int32_t width, int32_t height)
 {
+	dxCommon_ = new DirectXCommon;
+
 	dxCommon_->Initialization(win, title, win->kClientWidth, win->kClientHeight);
 
 	InitializeDxcCompiler();
@@ -279,8 +285,19 @@ void CreateEngine::Initialization(WinApp* win, const wchar_t* title, int32_t wid
 	ViewPort();
 
 	ScissorRect();
-}
 
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsDark();
+	ImGui_ImplWin32_Init(win_->GetHwnd());
+	ImGui_ImplDX12_Init(dxCommon_->device_,
+		dxCommon_->GetSwapChainDesc().BufferCount,
+		dxCommon_->GetRTVDesc().Format,
+		dxCommon_->srvDescriptorHeap_,
+		dxCommon_->srvDescriptorHeap_->GetCPUDescriptorHandleForHeapStart(),
+		dxCommon_->srvDescriptorHeap_->GetGPUDescriptorHandleForHeapStart()
+	);
+}
 
 void CreateEngine::BeginFrame()
 {
@@ -322,9 +339,16 @@ void CreateEngine::Finalize()
 	dxCommon_->Finalize();
 }
 
-void CreateEngine::Update() {}
+void CreateEngine::Update() {
+
+}
 
 void CreateEngine::Draw() {
+	Vector4 color = *triangle_[0]->materialData_;
+	ImGui::Begin("Triangle");
+	ImGui::ColorPicker4("color", &color.x);
+	ImGui::End();
+	*triangle_[0]->materialData_ = color;
 	for (int i = 0; i < 3; i++) {
 		triangle_[i]->Draw();
 	}
