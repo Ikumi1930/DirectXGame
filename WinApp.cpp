@@ -5,7 +5,30 @@
 #include "externals/imgui/imgui_impl_win32.h"
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+// ウィンドウプロシージャ
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 
+	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
+		return true;
+	}
+
+	// メッセージに応じてゲーム固有の処理を行う
+	switch (msg) {
+		// ウィンドウ.lpszClassName,    // クラス名
+		title,                // タイトルバーの名前
+	    WS_OVERLAPPEDWINDOW,  // ウィンドウスタイル
+	    CW_USEDEFAULT,        // 表示X座標
+	    CW_USEDEFAULT,        // 表示Y座標
+	    wrc.right - wrc.left, // ウィンドウ横幅
+	    wrc.bottom - wrc.top, // ウィンドウ縦幅
+	    nullptr,              // 親ウィンドウハンドル
+	    nullptr,              // メニューハンドル
+	    wc_.hInstance,        // インスタンスハンドル
+	    nullptr               // オプション
+	);
+
+		// ウィンドウ表示
+		ShowWindow(hwnd_, SW_SHOW);
 
 
 
