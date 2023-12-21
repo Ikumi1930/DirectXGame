@@ -17,7 +17,6 @@ ConstantBufferはShaderにCPUから値を渡すもの
 registerはShader上でのResource配置情報
 **/
 StructuredBuffer<Material> gMaterial : register(t0);
-
 /**
 PixelShaderは実際に画面に打つPixelの色を決めるShader
 VertexShaderの出力を補間した値などを使いながらPixelの色を決めOutputMerger(出力結合)に引き渡す
