@@ -61,16 +61,30 @@ void CreateTriangle::SettingVertex(const Vector4& a, const Vector4& b, const Vec
 
 void CreateTriangle::SettingColor(const Vector4& material) {
 	//マテリアル用のリソースを作る　今回はcolor1つ分
-	materialResource_ = CreateBufferResource(dxCommon_->GetDevice(), sizeof(Vector4));
-	//書き込むためのアドレスを取得
-	materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
+	ID3D12Resource* materialResource = CreateBufferResource(dxCommon_->GetDevice(), sizeof(Vector4));
+	//materialResource_ = CreateBufferResource(dxCommon_->GetDevice(), sizeof(Vector4));
 
-	*materialData_ = material;
+	///マテリアルにデータを差し込む
+	Vector4* materialDate = nullptr;
 
-	inputFloat[0] = &materialData_->x;
-	inputFloat[1] = &materialData_->y;
-	inputFloat[2] = &materialData_->z;
-	inputFloat[3] = &materialData_->w;
+	///書き込むためのアドレスを取得
+	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
+
+	///今回は赤を書き込む
+	*materialData_ = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+
+
+	////書き込むためのアドレスを取得
+	//materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
+
+	//*materialData_ = material;
+
+	//inputFloat[0] = &materialData_->x;
+	//inputFloat[1] = &materialData_->y;
+	//inputFloat[2] = &materialData_->z;
+	//inputFloat[3] = &materialData_->w;
+
+
 }
 
 ID3D12Resource* CreateTriangle::CreateBufferResource(ID3D12Device* device, size_t sizeInBytes) {
