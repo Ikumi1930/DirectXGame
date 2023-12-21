@@ -6,10 +6,16 @@ float4 main( float4 pos : POSITION ) : SV_POSITION
 **/
 
 /**
-Shader‚Æ‚ÍGPUã‚Å“®‚­ƒvƒƒOƒ‰ƒ€‚ÅƒŒƒ“ƒ_ƒŠƒ“ƒOƒpƒCƒvƒ‰ƒCƒ“‚Ì’†Šj‚ğ‚È‚·‹@”\
-VertexShader‚Í’¸“_‚É‘Î‚µ‚Ä‰ÁH‚ğs‚¤Shader
-“ü—Í‚³‚ê‚½’¸“_À•W‚ğ“¯ŸƒNƒŠƒbƒv‹óŠÔ‚É•ÏŠ·‚µ‚Äo—Í‚µƒ‰ƒXƒ^ƒ‰ƒCƒU‚Éˆø‚«“n‚·
+Shaderã¨ã¯GPUä¸Šã§å‹•ããƒ—ãƒ­ã‚°ãƒ©ãƒ ã§ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°ãƒ‘ã‚¤ãƒ—ãƒ©ã‚¤ãƒ³ã®ä¸­æ ¸ã‚’ãªã™æ©Ÿèƒ½
+VertexShaderã¯é ‚ç‚¹ã«å¯¾ã—ã¦åŠ å·¥ã‚’è¡Œã†Shader
+å…¥åŠ›ã•ã‚ŒãŸé ‚ç‚¹åº§æ¨™ã‚’åŒæ¬¡ã‚¯ãƒªãƒƒãƒ—ç©ºé–“ã«å¤‰æ›ã—ã¦å‡ºåŠ›ã—ãƒ©ã‚¹ã‚¿ãƒ©ã‚¤ã‚¶ã«å¼•ãæ¸¡ã™
 **/
+
+struct TransformationMatrix {
+	float32_t4x4 WVP;
+};
+ConstantBuffer<TransformationMatrix> gTransformationMatrix : register(b0);
+
 struct VertexShaderOutput {
     float32_t4 position : SV_POSITION;
 };
@@ -20,6 +26,6 @@ struct VertexShaderInput {
 
 VertexShaderOutput main(VertexShaderInput input) {
     VertexShaderOutput output;
-    output.position = input.position;
+    output.position = mul(input.position, gTransformationMatrix.WVP);
     return output;
 }
