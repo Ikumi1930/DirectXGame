@@ -21,14 +21,6 @@ void CreateTriangle::Draw() {
 
 }
 
-void CreateTriangle::Finalize() {
-	/************************************************
-	Resourceとは動作の実行に必要な処理システムの要素や機器
-	************************************************/
-	materialResource_->Release();
-	vertexResource_->Release();
-}
-
 void CreateTriangle::SettingVertex(const Vector4& a, const Vector4& b, const Vector4& c) {
 	/************************************************
 	Bufferはデータを一時的に保持する記憶領域
@@ -59,10 +51,16 @@ void CreateTriangle::SettingVertex(const Vector4& a, const Vector4& b, const Vec
 void CreateTriangle::SettingColor(const Vector4& material) {
 	//マテリアル用のリソースを作る　今回はcolor1つ分
 	materialResource_ = CreateBufferResource(dxCommon_->GetDevice(), sizeof(Vector4));
+	//ID3D12Resource* materialResource = CreateBufferResource(dxCommon_->GetDevice(), sizeof(Vector4));
+	
+	//マテリアルにデータを書き込む
+	Vector4* materialDate = nullptr;
+
 	//書き込むためのアドレスを取得
 	materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
 
-	*materialData_ = material;
+	//今回は赤
+	*materialData_ = Vector4(1.0f,0.0f,0.0f,1.0f);
 }
 
 ID3D12Resource* CreateTriangle::CreateBufferResource(ID3D12Device* device, size_t sizeInBytes) {
@@ -91,4 +89,15 @@ ID3D12Resource* CreateTriangle::CreateBufferResource(ID3D12Device* device, size_
 	assert(SUCCEEDED(hr));
 
 	return Resource;
+}
+
+
+
+
+void CreateTriangle::Finalize() {
+	/************************************************
+	Resourceとは動作の実行に必要な処理システムの要素や機器
+	************************************************/
+	materialResource_->Release();
+	vertexResource_->Release();
 }

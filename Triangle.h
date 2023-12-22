@@ -38,6 +38,8 @@ private:
 	ID3D12Resource* materialResource_;
 
 	ID3D12Resource* CreateBufferResource(ID3D12Device* device, size_t sizeInBytes);
+	//ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(Vector4)*3);
+
 
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView_;
 
