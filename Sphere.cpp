@@ -11,6 +11,7 @@ void Sphere::Initialize(DirectXCommon* dxCommon, MyEngine* engine) {
 	SettingColor();
 	SettingDictionalLight();
 	TransformMatrix();
+	CameraDirection();
 }
 
 void Sphere::Draw(
@@ -111,8 +112,10 @@ void Sphere::Draw(
 
 	*materialData_ = {material, true};
 	materialData_->uvTransform = uvTransformMatrix;
+	materialData_->shininess = 50.0f;
 	*wvpData_ = {wvpMatrix_, worldMatrix};
 	*directionalLight_ = light;
+	*cameraData_ = cameraTransform.translate;
 
 	// RootSignatureを設定。PS0とは別途設定が必要
 	dxCommon_->GetCommandList()->SetGraphicsRootSignature(engine_->GetRootSignature().Get());
@@ -133,6 +136,8 @@ void Sphere::Draw(
 	    1, wvpResource_->GetGPUVirtualAddress());
 	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(
 	    3, directionalLightResource_->GetGPUVirtualAddress());
+	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(
+	    5, cameraResource_->GetGPUVirtualAddress());
 
 	// SRVのDescriptorTableの先頭を設定。2はrootParameter[2]のこと
 	dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(
@@ -187,4 +192,10 @@ void Sphere::SettingDictionalLight() {
 	directionalLightResource_ =
 	    DirectXCommon::CreateBufferResource(dxCommon_->GetDevice(), sizeof(DirectionalLight));
 	directionalLightResource_->Map(0, nullptr, reinterpret_cast<void**>(&directionalLight_));
+}
+
+void Sphere::CameraDirection() {
+	cameraResource_ = dxCommon_->CreateBufferResource(dxCommon_->GetDevice(), sizeof(CameraForGPU));
+
+	cameraResource_->Map(0, nullptr, reinterpret_cast<void**>(&cameraData_));
 }

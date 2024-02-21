@@ -33,6 +33,8 @@ private:
 
 	void TransformMatrix();
 
+	void CameraDirection();
+
 private:
 	DirectXCommon* dxCommon_;
 	MyEngine* engine_;
@@ -46,6 +48,9 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> materialResource_;
 	Material* materialData_;
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> cameraResource_;
+	Vector3* cameraData_;
 
 	const float pi = 3.1415f;
 	uint32_t kSubDivision;
