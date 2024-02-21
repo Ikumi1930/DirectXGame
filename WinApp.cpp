@@ -1,14 +1,7 @@
 #include "WinApp.h"
-#include "DirectX.h"
-#include "externals/imgui/imgui.h"
-#include "externals/imgui/imgui_impl_dx12.h"
-#include "externals/imgui/imgui_impl_win32.h"
-extern IMGUI_IMPL_API LRESULT
-    ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // ウィンドウプロシージャ
-LRESULT CALLBACK WinApp::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-
+LRESULT WinApp::WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam)) {
 		return true;
 	}
@@ -75,22 +68,30 @@ void WinApp::CreateWindowView(const wchar_t* title, int32_t clientWidth, int32_t
 }
 
 bool WinApp::Procesmessage() {
-
 	MSG msg{};
 
 	if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+
 	if (msg.message == WM_QUIT) // 終了メッセージが来たらループを抜ける
 	{
 		return true;
 	}
+
 	return false;
 }
 
-void WinApp::Finalize() { debugController_->Release(); }
+void WinApp::Finalize() {
+	// debugController_->Release();
+}
+
+WinApp* WinApp::GetInstance() {
+	static WinApp instance;
+
+	return &instance;
+}
 
 HWND WinApp::hwnd_;
-UINT WinApp::windowStyle_;
-ID3D12Debug1* WinApp::debugController_;
+Microsoft::WRL::ComPtr<ID3D12Debug1> WinApp::debugController_;

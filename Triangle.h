@@ -1,45 +1,62 @@
 #pragma once
-#include"DirectX.h"
-#include"Vector4.h"
+#include "DirectX.h"
+#include "Matrix.h"
+#include "Matrix4x4.h"
+#include "String.h"
+#include "Vector2.h"
+#include "Vector3.h"
+#include "Vector4.h"
+#include "Vertex.h"
 
-typedef struct Triangle {
-	Vector4 v1;
-	Vector4 v2;
-	Vector4 v3;
-	Vector4 material;
-};
+class MyEngine;
 
-class CreateEngine;
-
-class CreateTriangle {
+class Triangle {
 public:
-	void Initialize(DirectXCommon* dxCommon, const Vector4& a, const Vector4& b, const Vector4& c, const Vector4& material);
+	void Initialize(DirectXCommon* dxCommon, MyEngine* engine);
 
-	void Draw();
+	void Draw(
+	    const Vector4& a, const Vector4& b, const Vector4& c, const Vector4& material,
+	    const Transform& transform, const Transform& cameraTransform, uint32_t index,
+	    const DirectionalLight& light);
 
 	void Finalize();
 
-	void SettingVertex(const Vector4& a, const Vector4& b, const Vector4& c);
-
-	void SettingColor(const Vector4& material);
-
-	Vector4* materialData_;
+	Transform uvTransformSprite{
+	    {1.0f, 1.0f, 1.0f},
+        {0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f}
+    };
 
 private:
-	CreateEngine* Engine_;
+	void SettingVertex();
+
+	void SettingColor();
+
+	void SettingDictionalLight();
+
+	void TransformMatrix();
+
+private:
+	MyEngine* engine_;
 
 	DirectXCommon* dxCommon_;
 
-	Vector4* vertexData_;
+	VertexData* vertexData_;
 
-	ID3D12Resource* vertexResource_;
+	Material* materialData_;
 
-	ID3D12Resource* materialResource_;
+	Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_;
 
-	ID3D12Resource* CreateBufferResource(ID3D12Device* device, size_t sizeInBytes);
+	Microsoft::WRL::ComPtr<ID3D12Resource> materialResource_;
 
 	D3D12_VERTEX_BUFFER_VIEW vertexBufferView_;
 
-	float* inputFloat[4];
+	// WVP用のリソース
+	Microsoft::WRL::ComPtr<ID3D12Resource> wvpResource_;
+	TransformationMatrix* wvpData_;
 
+	DirectionalLight* directionalLight_;
+	Microsoft::WRL::ComPtr<ID3D12Resource> directionalLightResource_;
+
+	Matrix4x4 uvTransformMatrix;
 };

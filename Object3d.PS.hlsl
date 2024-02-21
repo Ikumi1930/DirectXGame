@@ -1,35 +1,35 @@
-/**
-float4 main() : SV_TARGET
-{
-    return float4(1.0f, 1.0f, 1.0f, 1.0f);
-}
-**/
+#include "Object3d.hlsli"
 
-/**
-Materialは色など三角形の表面の材質を決定するもの
-**/
-struct Material {
-    float32_t4 color;
-};
+ConstantBuffer<Material> gMaterial : register(b0);
 
-/**
-ConstantBufferはShaderにCPUから値を渡すもの
-registerはShader上でのResource配置情報
-**/
-ConstantBuffer<Material>gMaterial : register(b0);
+Texture2D<float32_t4> gTexture : register(t0);
 
-/**
-PixelShaderは実際に画面に打つPixelの色を決めるShader
-VertexShaderの出力を補間した値などを使いながらPixelの色を決めOutputMerger(出力結合)に引き渡す
-PIXはピクセルのこと
-**/
+SamplerState gSampler : register(s0);
 
-struct PixelShaderOutput {
-    float32_t4 color : SV_TARGET0;
-};
+ConstantBuffer<DirectionalLight> gDirectionalLight : register(b1);
 
-PixelShaderOutput main() {
-    PixelShaderOutput output;
-    output.color = gMaterial.color;
-    return output;
+PixelShaderOutput main(VertexShaderOutput input) {
+	PixelShaderOutput output;
+	float4 transformedUV = mul(float32_t4(input.texcoord, 0.0f, 1.0f), gMaterial.uvTransform);
+	// float32_t4 textureColor = gTexture.Sample(gSampler, input.texcoord);
+
+	float32_t4 textureColor = gTexture.Sample(gSampler, transformedUV.xy);
+
+	output.color = gMaterial.color * textureColor;
+
+	if (textureColor.a <= 0.5) {
+		discard;
+	}
+
+	if (gMaterial.enableLighting != 0) {
+		// float cos = saturate(dot(normalize(input.normal), -gDirectionalLight.direction));
+		float NdotL = dot(normalize(input.normal), -gDirectionalLight.direction);
+		float cos = pow(NdotL * 0.5f + 0.5f, 2.0f);
+		output.color.rgb = gMaterial.color.rgb * textureColor.rgb * gDirectionalLight.color.rgb *
+		                   cos * gDirectionalLight.intensity;
+		output.color.a = gMaterial.color.a * textureColor.a;
+	} else {
+		output.color = gMaterial.color * textureColor;
+	}
+	return output;
 }

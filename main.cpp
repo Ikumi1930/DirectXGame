@@ -1,53 +1,25 @@
 #include "Engine.h"
-#include "Triangle.h"
+#include "SceneManager.h"
 
 const wchar_t kWindowTitle[] = { L"CG2_サカモトイクミ" };
 
+// Windowsアプリでのエントリーポイント
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+	D3DResourceLeakChecker leakCheck;
+	Microsoft::WRL::ComPtr<IDXGIFactory7> dxgiFactory;
+	Microsoft::WRL::ComPtr<ID3D12Device> device;
 
-	//初期化
-	WinApp* win_ = nullptr;
-	CreateEngine* Engine = new CreateEngine;
-	Engine->Initialization(win_, kWindowTitle, 1280, 720);
+	// COM初期化
+	CoInitializeEx(0, COINIT_MULTITHREADED);
 
-	Engine->VariableInialize();
+	// 初期化
+	MyEngine* engine = new MyEngine;
+	engine->Initialize(kWindowTitle, 1280, 720);
 
-#pragma region ゲームループ
+	SceneManager* sceneManager = new SceneManager(engine, engine->GetDirectXCommon());
 
-	MSG msg{};
+	sceneManager->Run();
 
-	while (msg.message != WM_QUIT) {
-
-		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-
-		}
-		else {
-
-			//ゲームの処理
-			Engine->BeginFrame();
-
-			ImGui_ImplDX12_NewFrame();
-			ImGui_ImplWin32_NewFrame();
-			ImGui::NewFrame();
-
-			ImGui::ShowDemoWindow();
-			Engine->Update();
-
-			Engine->Draw();
-
-			ImGui::Render();
-
-			Engine->EndFrame();
-
-		}
-	}
-
-#pragma endregion
-
-	OutputDebugStringA("Hello,DirectX!\n");
-
-	Engine->Finalize();
-	return 0;
+	delete engine;
+	delete sceneManager;
 }

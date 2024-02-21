@@ -1,116 +1,125 @@
 #include "Triangle.h"
-#include <assert.h>
 #include "Engine.h"
-#include "externals/imgui/imgui.h"
-#include "externals/imgui/imgui_impl_dx12.h"
-#include "externals/imgui/imgui_impl_win32.h"
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#include <assert.h>
 
-void CreateTriangle::Initialize(DirectXCommon* dxCommon, const Vector4& a, const Vector4& b, const Vector4& c, const Vector4& material) {
+void Triangle::Initialize(DirectXCommon* dxCommon, MyEngine* engine) {
 	dxCommon_ = dxCommon;
-	SettingVertex(a, b, c);
-	SettingColor(material);
+	engine_ = engine;
+	SettingVertex();
+	SettingColor();
+	SettingDictionalLight();
+	TransformMatrix();
 }
 
-void CreateTriangle::Draw() {
+void Triangle::Draw(
+    const Vector4& a, const Vector4& b, const Vector4& c, const Vector4& material,
+    const Transform& transform, const Transform& cameraTransform, uint32_t index,
+    const DirectionalLight& light) {
+	Matrix4x4 worldMatrix =
+	    MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
+	Matrix4x4 cameraMatrix =
+	    MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
+	Matrix4x4 viewMatrix = Inverse(cameraMatrix);
+	Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(
+	    0.45f, float(dxCommon_->GetWin()->kClientWidth) / float(dxCommon_->GetWin()->kClientHeight),
+	    0.1f, 100.0f);
 
-	//VBVを設定
+	Matrix4x4 wvpMatrix_ = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+
+	uvTransformMatrix = MakeScaleMatrix(uvTransformSprite.scale);
+	uvTransformMatrix =
+	    Multiply(uvTransformMatrix, MakeRotateZmatrix(uvTransformSprite.rotate.z));
+	uvTransformMatrix =
+	    Multiply(uvTransformMatrix, MakeTranslateMatrix(uvTransformSprite.translate));
+
+	// 左下
+	vertexData_[0].position = a;
+	vertexData_[0].texcoord = {0.0f, 1.0f};
+
+	// 上
+	vertexData_[1].position = b;
+	vertexData_[1].texcoord = {0.5f, 0.0f};
+
+	// 右下
+	vertexData_[2].position = c;
+	vertexData_[2].texcoord = {1.0f, 1.0f};
+
+	*materialData_ = {material, false};
+	materialData_->uvTransform = uvTransformMatrix;
+	*wvpData_ = {wvpMatrix_, worldMatrix};
+	*directionalLight_ = light;
+
+	// RootSignatureを設定。PS0とは別途設定が必要
+	dxCommon_->GetCommandList()->SetGraphicsRootSignature(engine_->GetRootSignature().Get());
+
+	// PS0を設定
+	dxCommon_->GetCommandList()->SetPipelineState(engine_->GetGraphicsPipelineState().Get());
+
+	// VBVを設定
 	dxCommon_->GetCommandList()->IASetVertexBuffers(0, 1, &vertexBufferView_);
-	//形状を設定。PS0に設定しているものとはまた別。同じものを設定する
+
+	// 形状を設定。PS0に設定しているものとはまた別。同じものを設定する
 	dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	//マテリアルCBufferの場所を設定
-	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(0, materialResource_->GetGPUVirtualAddress());
-	//描画
+
+	// マテリアルCBufferの場所を設定
+	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(
+	    3, directionalLightResource_->GetGPUVirtualAddress());
+	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(
+	    0, materialResource_->GetGPUVirtualAddress());
+	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(
+	    1, wvpResource_->GetGPUVirtualAddress());
+
+	// SRVのDescriptorTableの先頭を設定。2はrootParameter[2]のこと
+	dxCommon_->GetCommandList()->SetGraphicsRootDescriptorTable(
+	    2, engine_->textureSrvHandleGPU_[index]);
+
+	// 描画
 	dxCommon_->GetCommandList()->DrawInstanced(3, 1, 0, 0);
 }
 
-void CreateTriangle::Finalize() {
-	/************************************************
-	Resourceとは動作の実行に必要な処理システムの要素や機器
-	************************************************/
-	materialResource_->Release();
-	vertexResource_->Release();
+void Triangle::Finalize() {
+	//	materialResource_->Release();
+	//	vertexResource_->Release();
+	//	directionalLightResource_->Release();
+	//	wvpResource_->Release();
 }
 
-void CreateTriangle::SettingVertex(const Vector4& a, const Vector4& b, const Vector4& c) {
-	/************************************************
-	Bufferはデータを一時的に保持する記憶領域
-	Z-Bufferとは深度情報を格納したResource
-	Vertexは頂点のこと
-	VertexBufferView(VBV)
-	ShaderResourceView(SRV)はTextureを読むのに必要なもの
-	************************************************/
-	vertexResource_ = CreateBufferResource(dxCommon_->GetDevice(), sizeof(Vector4) * 3);
-	//リソースの先頭のアドレスから使う
+void Triangle::SettingVertex() {
+	vertexResource_ =
+	    dxCommon_->CreateBufferResource(dxCommon_->GetDevice(), sizeof(VertexData) * 3);
+
+	// リソースの先頭のアドレスから使う
 	vertexBufferView_.BufferLocation = vertexResource_->GetGPUVirtualAddress();
-	//使用するリソースのサイズは頂点3つ分のサイズ
-	vertexBufferView_.SizeInBytes = sizeof(Vector4) * 3;
-	//1頂点当たりのサイズ
-	vertexBufferView_.StrideInBytes = sizeof(Vector4);
-	//書き込むためのアドレスを取得
+
+	// 使用するリソースのサイズは頂点3つ分のサイズ
+	vertexBufferView_.SizeInBytes = sizeof(VertexData) * 3;
+
+	// 1頂点当たりのサイズ
+	vertexBufferView_.StrideInBytes = sizeof(VertexData);
+
+	// 書き込むためのアドレスを取得
 	vertexResource_->Map(0, nullptr, reinterpret_cast<void**>(&vertexData_));
-
-	//左下
-	vertexData_[0] = a;
-	//上
-	vertexData_[1] = b;
-	//右下
-	vertexData_[2] = c;
-
 }
 
-void CreateTriangle::SettingColor(const Vector4& material) {
-	//マテリアル用のリソースを作る　今回はcolor1つ分
-	ID3D12Resource* materialResource = CreateBufferResource(dxCommon_->GetDevice(), sizeof(Vector4));
-	//materialResource_ = CreateBufferResource(dxCommon_->GetDevice(), sizeof(Vector4));
+void Triangle::SettingColor() {
+	// マテリアル用のリソースを作る　今回はcolor1つ分
+	materialResource_ = dxCommon_->CreateBufferResource(dxCommon_->GetDevice(), sizeof(Material));
 
-	///マテリアルにデータを差し込む
-	Vector4* materialDate = nullptr;
+	// 書き込むためのアドレスを取得
+	materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
 
-	///書き込むためのアドレスを取得
-	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
-
-	///今回は赤を書き込む
-	*materialData_ = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-
-
-	////書き込むためのアドレスを取得
-	//materialResource_->Map(0, nullptr, reinterpret_cast<void**>(&materialData_));
-
-	//*materialData_ = material;
-
-	//inputFloat[0] = &materialData_->x;
-	//inputFloat[1] = &materialData_->y;
-	//inputFloat[2] = &materialData_->z;
-	//inputFloat[3] = &materialData_->w;
-
-
+	materialData_->uvTransform = MakeIdentity4x4();
 }
 
-ID3D12Resource* CreateTriangle::CreateBufferResource(ID3D12Device* device, size_t sizeInBytes) {
-	//頂点リソース用のヒープの設定
-	D3D12_HEAP_PROPERTIES uplodeHeapProperties{};
-	uplodeHeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;//UploadHeapを使う
-	//頂点リソースの設定
-	D3D12_RESOURCE_DESC ResourceDesc{};
-	//バッファリソース。テクスチャの場合はまた別の設定をする
-	ResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	ResourceDesc.Width = sizeInBytes;//リソースサイズ
-	//バッファの場合はこれらは１にする決まり
-	ResourceDesc.Height = 1;
-	ResourceDesc.DepthOrArraySize = 1;
-	ResourceDesc.MipLevels = 1;
-	ResourceDesc.SampleDesc.Count = 1;
-	//バッファの場合はこれにする決まり
-	ResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	HRESULT hr;
+void Triangle::TransformMatrix() {
+	wvpResource_ =
+	    dxCommon_->CreateBufferResource(dxCommon_->GetDevice(), sizeof(TransformationMatrix));
+	wvpResource_->Map(0, NULL, reinterpret_cast<void**>(&wvpData_));
+	wvpData_->WVP = MakeIdentity4x4();
+}
 
-	ID3D12Resource* Resource = nullptr;
-	//実際に頂点リソースを作る
-	hr = device->CreateCommittedResource(&uplodeHeapProperties, D3D12_HEAP_FLAG_NONE,
-		&ResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&Resource));
-	assert(SUCCEEDED(hr));
-
-	return Resource;
+void Triangle::SettingDictionalLight() {
+	directionalLightResource_ =
+	    DirectXCommon::CreateBufferResource(dxCommon_->GetDevice(), sizeof(DirectionalLight));
+	directionalLightResource_->Map(0, NULL, reinterpret_cast<void**>(&directionalLight_));
 }

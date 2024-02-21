@@ -2,7 +2,16 @@
 #include <Windows.h>
 #include <cstdint>
 #include <d3d12.h>
+#include <wrl.h>
+
 #pragma comment(lib, "d3d12.lib")
+
+#include "externals/imgui/imgui.h"
+#include "externals/imgui/imgui_impl_dx12.h"
+#include "externals/imgui/imgui_impl_win32.h"
+
+extern IMGUI_IMPL_API LRESULT
+    ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 class WinApp {
 public:
@@ -10,27 +19,35 @@ public:
 	static const int32_t kClientWidth = 1280;
 	static const int32_t kClientHeight = 720;
 
-	HINSTANCE GetHInstance() const { return wc_.hInstance; }
+	bool Procesmessage();
+	void Finalize();
 
-	static bool Procesmessage();
-	static void Finalize();
+	static LRESULT WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
-	static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+	Microsoft::WRL::ComPtr<ID3D12Debug1> GetdebugController() { return debugController_; }
 
-	static ID3D12Debug1* GetdebugController() { return debugController_; }
+	inline HWND GetHwnd() { return hwnd_; }
 
-	static inline HWND GetHwnd() { return hwnd_; }
+	void CreateWindowView(const wchar_t* title, int32_t clientWidth, int32_t clientheight);
 
-	static void CreateWindowView(const wchar_t* title, int32_t clientWidth, int32_t clientheight);
+	WinApp(const WinApp& obj) = delete;
+
+	WinApp& operator=(const WinApp& obj) = delete;
+
+	static WinApp* GetInstance();
+
+	WNDCLASS GetWc() { return wc_; }
 
 private:
-	static UINT windowStyle_;
+	UINT windowStyle_;
 
-	static ID3D12Debug1* debugController_;
-
-	static inline RECT wrc_ = {0, 0, kClientWidth, kClientHeight};
+	static Microsoft::WRL::ComPtr<ID3D12Debug1> debugController_;
 
 	static inline WNDCLASS wc_{}; // ウィンドウクラス
 
 	static HWND hwnd_;
+
+	WinApp() = default;
+
+	~WinApp() = default;
 };
