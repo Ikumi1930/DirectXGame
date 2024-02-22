@@ -1,7 +1,7 @@
 #include "Engine.h"
 #include "SceneManager.h"
 
-const wchar_t kWindowTitle[] = { L"CG2_サカモトイクミ" };
+const wchar_t kWindowTitle[] = { L"LE2C_08_サカモトイクミ" };
 
 // Windowsアプリでのエントリーポイント
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
